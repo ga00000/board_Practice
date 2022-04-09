@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.open.Secret">
+
+	<sql id="Where"> <!-- 게시글,댓글  -->
+		<if test="searchKeyword !=null and searchKeyword !=''">
+			<if test="searchCondition !=null and searchCondition !='' and searchCondition ==0">
+				AND (SE_TITLE LIKE CONCAT('%',#{searchKeyword},'%') OR SE_CONT like CONCAT('%',#{searchKeyword},'%') )
+			</if>
+			<if test="searchCondition !=null and searchCondition !='' and searchCondition ==1">
+				AND SE_TITLE LIKE CONCAT('%',#{searchKeyword},'%')
+			</if>
+			<if test="searchCondition !=null and searchCondition !='' and searchCondition ==2">
+				AND SE_CONT LIKE CONCAT('%',#{searchKeyword},'%')
+			</if>
+	 	</if>
+	</sql>
+	
+	<!-- selectContents : 게시글 내용 조회 -->
+	<select id="selectContents" parameterType="SecretVO" resultType="SecretVO">
+		/* Secret.selectContents */
+		<![CDATA[
+			 SELECT  
+				  SE_SEQ 																seSeq
+				, SE_TITLE																seTitle
+				, SE_CONT																seCont
+				, DATE_FORMAT(SE_RGST_DT,'%Y.%m.%d')									seRgstDt
+				, F_USER_NM(SE_RGST_ID)													seRgstId
+				, SE_ATCH_FILE_ID 														seAtchFileId
+				, SE_SECRET_YN															seSecretYn
+				, SE_SECRET_PW															seSecretPw
+				, SE_CATEGORY															seCategory
+				
+		     FROM 	 t_secret 
+			 WHERE 	 SE_USE_YN	=	'Y'	
+				 AND SE_SEQ 	=	#{seSeq}
+		]]> 
+	</select>	
+	
+	
+	
+	<!-- selectList : 게시글 리스트 조회 -->
+	<select id="selectList" parameterType="cmmnDefaultVO" resultType="SecretVO">
+		/* Secret.selectList */
+		<![CDATA[
+      	     SELECT  
+				  SE_SEQ 																seSeq
+				, SE_TITLE																seTitle
+				, DATE_FORMAT(SE_RGST_DT,'%Y.%m.%d')									seRgstDt
+				, F_USER_NM(SE_RGST_ID)													seRgstId
+				, SE_SECRET_YN															seSecretYn
+				, SE_SECRET_PW															seSecretPw
+
+		     FROM  	t_secret 
+			 WHERE 	SE_USE_YN='Y' 
+	      ]]>
+		     <include refid="Where"/>	
+	     <![CDATA[ 
+	    		ORDER BY 		SE_SEQ 			DESC
+				LIMIT  			#{firstIndex} , #{recordCountPerPage}
+		]]> 
+	</select>	
+
+
+	<!-- selectCount : 사용중인 게시글 개수 조회  -->
+	<select id="selectCount" parameterType="cmmnDefaultVO" resultType="int">
+		/* Secret.selectCount */
+		<![CDATA[
+			SELECT 
+				COUNT(SE_SEQ) 					cnt 
+			FROM 	t_secret 
+			WHERE 	SE_USE_YN='Y' 
+		]]>
+			 <include refid="Where"/>
+	</select>
+	
+	<!-- insertContents : 게시글 삽입 --> 
+	<insert id="insertContents" parameterType="SecretVO">
+		/* Secret.insertContents */
+		<![CDATA[
+			INSERT INTO t_secret(
+           	  	  SE_SEQ
+				, SE_TITLE 
+				, SE_CONT
+				, SE_RGST_ID 
+				, SE_ATCH_FILE_ID 
+				, SE_SECRET_YN	
+				, SE_SECRET_PW	
+				, SE_CATEGORY																																											
+			)
+			VALUES (
+				 (SELECT IFNULL(MAX(TS.SE_SEQ)+1,1) FROM t_secret TS)
+				,#{seTitle}
+				,#{seCont}
+				,#{loginSeq}
+				,#{seAtchFileId}
+				,#{seSecretYn}
+				,#{seSecretPw}
+				,#{seCategory}
+			)
+		]]>
+	</insert> 
+	
+	<!-- updateContents : 게시글 수정  -->
+	<update id="updateContents" parameterType="SecretVO">
+		/* Secret.updateContents */
+		<![CDATA[
+			UPDATE t_secret     
+			 SET 
+				  SE_TITLE    							= #{seTitle}
+				, SE_CONT								= #{seCont}
+				, SE_RVSE_DT 						 	= NOW()
+				, SE_ATCH_FILE_ID 						= #{seAtchFileId}
+				, SE_SECRET_YN							= #{seSecretYn}
+				, SE_SECRET_PW							= #{seSecretPw}	
+				, SE_CATEGORY							= #{seCategory}			
+											
+									
+			WHERE  SE_SEQ =	#{seSeq}  
+		]]> 	
+		
+
+	</update>
+	
+	<!-- deleteContents : 게시글삭제 사용여부 > 부  -->
+	<update id="deleteContents" parameterType="SecretVO">
+		/* Secret.deleteContents */
+		<![CDATA[
+			UPDATE t_secret 
+		       SET
+	          	 SE_USE_YN	='N'
+			WHERE SE_SEQ = #{seSeq}
+		]]>
+	</update>
+	
+
+
+	
+	
+	
+	
+</mapper>

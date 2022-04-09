@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.open.JgCmtTwo">
+
+	<sql id="Where"> <!-- 게시글,댓글  -->
+		<if test="searchKeyword !=null and searchKeyword !=''">
+			<if test="searchCondition !=null and searchCondition !='' and searchCondition ==0">
+				AND (JG_TITLE LIKE CONCAT('%',#{searchKeyword},'%') OR JG_CONT like CONCAT('%',#{searchKeyword},'%') )
+			</if>
+			<if test="searchCondition !=null and searchCondition !='' and searchCondition ==1">
+				AND JG_TITLE LIKE CONCAT('%',#{searchKeyword},'%')
+			</if>
+			<if test="searchCondition !=null and searchCondition !='' and searchCondition ==2">
+				AND JG_CONT LIKE CONCAT('%',#{searchKeyword},'%')
+			</if>
+	 	</if>
+	</sql>
+	
+	<!-- selectContents : 게시글 내용 조회 + 댓글 내용 조회 
+		시퀀스/그룹시퀀스/게시글,댓글 제목/게시글,댓글 내용/등록일/등록자/첨부파일 -->
+	<select id="selectContents" parameterType="JgCmtTwoVO" resultType="JgCmtTwoVO">
+		/* JgCmtTwo.selectContents */
+		<![CDATA[
+			 SELECT  
+				  JG_SEQ 											jgSeq
+				, JG_GROUP_SEQ 										jgGroupSeq
+				, JG_TITLE											jgTitle
+				, JG_CONT											jgCont
+				, JG_REPLY_USE_YN									jgReplyUseYn
+				, DATE_FORMAT(JG_RGST_DT,'%Y.%m.%d')				jgRgstDt
+				, F_USER_NM(JG_RGST_ID)								jgRgstId
+				, JG_ATCH_FILE_ID 									jgAtchFileId
+				, JG_RE_ATCH_FILE_ID								jgReAtchFileId
+				
+		     FROM 	 t_jgcmttwo 
+			 WHERE 	 JG_USE_YN	=	'Y'	
+				 AND JG_SEQ 	=	#{jgSeq}
+		]]> 
+	</select>	
+	
+	
+	
+	<!-- selectList : 게시글 리스트+댓글 리스트 조회 
+		시퀀스/게시글 제목/등록자/등록일-->
+	<select id="selectList" parameterType="JgCmtTwoVO" resultType="JgCmtTwoVO">
+		/* JgCmtTwo.selectList */
+		
+		<![CDATA[
+      	     SELECT  
+				  JG_SEQ 											jgSeq
+				, JG_GROUP_SEQ 										jgGroupSeq
+				, JG_TITLE											jgTitle
+				, JG_CONT											jgCont
+				, JG_REPLY_USE_YN									jgReplyUseYn
+				, DATE_FORMAT(JG_RGST_DT,'%Y.%m.%d')				jgRgstDt
+				, F_USER_NM(JG_RGST_ID)								jgRgstId
+				, JG_ATCH_FILE_ID 									jgAtchFileId
+				, JG_RE_ATCH_FILE_ID								jgReAtchFileId
+
+		     FROM  	t_jgcmttwo 
+			 WHERE 	JG_USE_YN='Y' 
+			 	AND JG_SEQ = JG_GROUP_SEQ
+	      ]]>
+		     <include refid="Where"/>	<!-- 리스트 : 게시글만 출력  -->
+	     <![CDATA[ 
+	    		ORDER BY 		JG_SEQ 			DESC
+				LIMIT  			#{firstIndex} , #{recordCountPerPage}
+		]]> 
+	</select>	
+
+
+	<!-- selectCount : 사용중인 게시글 개수 조회  -->
+	<select id="selectCount" parameterType="cmmnDefaultVO" resultType="int">
+		/* JgCmtTwo.selectCount */
+		<![CDATA[
+			SELECT 
+				COUNT(JG_SEQ) 					cnt 
+			FROM t_jgcmttwo 
+			WHERE 	JG_USE_YN='Y' 
+				AND JG_SEQ = JG_GROUP_SEQ
+		]]>
+			 <include refid="Where"/>
+	</select>
+	
+	<!-- insertContents : 게시글 삽입 
+		시퀀스/그룹시퀀스/게시글 제목/게시글 내용/레벨/순번/등록자/첨부파일 --> 
+	<insert id="insertContents" parameterType="JgCmtTwoVO">
+		/* JgCmtTwo.insertContents */
+		<![CDATA[
+			INSERT INTO t_jgcmttwo(
+           	  	  JG_SEQ
+           	  	, JG_GROUP_SEQ 
+				, JG_TITLE 
+				, JG_CONT
+				, JG_RGST_ID 
+				, JG_ATCH_FILE_ID 
+			)
+			VALUES (
+				 (SELECT IFNULL(MAX(TC.JG_SEQ)+1,1) FROM t_jgcmttwo TC)
+				,(SELECT IFNULL(MAX(TC.JG_SEQ)+1,1) FROM t_jgcmttwo TC)
+				,#{jgTitle}
+				,#{jgCont}
+				,#{loginSeq}
+				,#{jgAtchFileId}
+			)
+		]]>
+	</insert> 
+	
+	<!-- updateContents : 게시글 수정  
+		게시글 제목/게시글 내용/수정일/첨부파일-->
+	<update id="updateContents" parameterType="JgCmtTwoVO">
+		/* JgCmtTwo.updateContents */
+		<![CDATA[
+			UPDATE t_jgcmttwo     
+			 SET 
+				  JG_TITLE    						= #{jgTitle }
+				, JG_CONT							= #{jgCont }
+				, JG_REPLY_USE_YN					= #{jgReplyUseYn }
+				, JG_RVSE_DT 					 	= NOW()
+				, JG_ATCH_FILE_ID 					= #{jgAtchFileId }
+					
+			WHERE  JG_SEQ =	#{jgSeq}  
+		]]> 	
+		
+
+	</update>
+	
+	<!-- deleteContents : 게시글삭제 사용여부 > 부  -->
+	<update id="deleteContents" parameterType="JgCmtTwoVO">
+		/* JgCmtTwo.deleteContents */
+		<![CDATA[
+			UPDATE t_jgcmttwo 
+		       SET
+	          	 JG_USE_YN='N'
+			WHERE JG_SEQ = #{jgSeq}
+		]]>
+	</update>
+	
+	
+	<!-- selectComments : 댓글 리스트 조회(view) 
+		그룹시퀀스/댓글내용/댓글 등록일/댓글 첨부파일 아이디 
+		** 자식시퀀스가 부모시퀀스 물고 있게 할 것! / 게시글에 달린 댓글 확인 : 게시글seq -->
+	<select id="selectComments" parameterType="JgCmtTwoVO" resultType="JgCmtTwoVO">
+		/* JgCmtTwo.selectComments */
+		<![CDATA[
+			SELECT
+				  JG_SEQ 											jgSeq
+				, JG_GROUP_SEQ 										jgGroupSeq
+				, JG_TITLE											jgTitle
+				, JG_CONT											jgCont
+				, JG_REPLY_USE_YN									jgReplyUseYn 
+				, DATE_FORMAT(JG_RGST_DT,'%Y.%m.%d')				jgRgstDt
+				, F_USER_NM(JG_RGST_ID)								jgRgstId
+				, JG_ATCH_FILE_ID 									jgAtchFileId
+				, JG_RE_ATCH_FILE_ID								jgReAtchFileId
+				
+		     FROM  t_jgcmttwo 
+			 WHERE  	JG_USE_YN	   =	'Y'	
+				  AND 	JG_GROUP_SEQ = #{jgSeq} 
+				  AND 	JG_SEQ <> JG_GROUP_SEQ
+		]]> 
+	</select>	
+	
+	
+	<!-- insertComments : 댓글 삽입 (form)
+		그룹시퀀스(입력값은 시퀀스)/댓글 내용/레벨/순번/댓글 등록자/댓글 첨부파일아이디 -->
+	<insert id="insertComments" parameterType="JgCmtTwoVO">
+		/* JgCmtTwo.insertComments */
+		<![CDATA[
+			INSERT INTO t_jgcmttwo(
+				  JG_SEQ
+           	  	, JG_GROUP_SEQ 
+				, JG_CONT 
+				, JG_REPLY_USE_YN					
+				, JG_RGST_ID
+				, JG_RE_ATCH_FILE_ID 
+			)
+			VALUES (
+				(SELECT IFNULL(MAX(TC.JG_SEQ)+1,1) FROM t_jgcmttwo TC)
+				,#{jgSeq}
+				,#{jgCont}
+				, "Y"
+				,#{loginSeq}
+				,#{jgReAtchFileId}
+			)
+		]]>
+	</insert>
+	
+	<!-- updateComments : 댓글 수정  
+		댓글 내용/댓글 수정일/댓글 첨부파일아이디 -->
+	<update id="updateComments" parameterType="JgCmtTwoVO">
+		/* JgCmtTwo.updateComments */
+		<![CDATA[
+			UPDATE t_jgcmttwo     
+			 SET 
+				  JG_CONT    										 = #{jgCont } 
+				, JG_RVSE_DT 											 =  NOW()
+				, JG_RE_ATCH_FILE_ID							 = #{jgReAtchFileId }
+					
+			WHERE   JG_SEQ <> JG_GROUP_SEQ
+		]]> 	
+	</update>
+	
+	<!-- deleteComments : 댓글 삭제 내용비우기 + 사용여부>부  -->
+	<update id="deleteComments" parameterType="JgCmtTwoVO">
+		/* JgCmtTwo.deleteComments */
+		<![CDATA[
+			UPDATE t_jgcmttwo 
+		       SET
+				 JG_USE_YN								 ='N'
+			WHERE 	JG_SEQ <> JG_GROUP_SEQ
+		]]>
+	</update>
+	
+
+
+	
+	
+	
+	
+</mapper>

@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.open.Aladdin">
+
+	<sql id="Where">
+		<if test="searchKeyword !=null and searchKeyword !=''">
+			<if test="searchCondition !=null and searchCondition !='' and searchCondition ==0">
+				AND (AL_TITLE LIKE CONCAT('%',#{searchKeyword},'%') OR AL_CONT like CONCAT('%',#{searchKeyword},'%'))
+			</if>
+			<if test="searchCondition !=null and searchCondition !='' and searchCondition ==1">
+				AND AL_TITLE LIKE CONCAT('%',#{searchKeyword},'%')
+			</if>
+			<if test="searchCondition !=null and searchCondition !='' and searchCondition ==2">
+				AND AL_CONT LIKE CONCAT('%',#{searchKeyword},'%')
+			</if>
+	 	</if>
+	</sql>
+	
+	<!-- selectContents : 게시글 내역 조회 
+		일련번호/서적이름/등록일/등록자/작가/  출판사/출판일/카테고리/별점/좋아요/  
+		서적설명/출판사서평/책표지/전자책유무/품절여부/  		결제수단/가격/첨부파일   18개 -->
+	<select id="selectContents" parameterType="aladdinVO" resultType="aladdinVO">
+		/* Aladdin.selectContents */
+		<![CDATA[
+			 SELECT  
+				  AL_SEQ 																alSeq
+				, AL_TITLE																alTitle
+				, DATE_FORMAT(AL_RGST_DT,'%Y.%m.%d')		alRgstDt
+				, F_USER_NM(AL_RGST_ID)									alRgstId
+				, AL_WRITER															alWriter
+				, AL_PUBLISHING													alPublishing
+				, AL_PUBL_DT															alPublDt
+				, AL_CATEGORY														alCategory
+				, AL_STAR 																alStar
+				, AL_LIKE																	alLike
+
+				, AL_CONT																alCont
+				, AL_REVIEW_P														alReviewP
+				, AL_COVER															alCover
+				, AL_EBOOK_YN														alEbookYn
+				, AL_SOLDOUT_YN												alSoldoutYn
+				, AL_PAYMENT														alPayment
+				, AL_ATCH_FILE_ID 												alAtchFileId
+				, AL_PRICE																alPrice
+				
+		     FROM  T_ALADDIN 
+			 WHERE  AL_USE_YN='Y'	
+				 AND AL_SEQ = #{alSeq}
+		]]> <!-- #{} : 파라미터가 String 형태로 자동으로 파라미터 형태됨. 쿼리주입공격 예방 -->
+	</select>	
+	
+	
+	
+	<!-- selectList : 첫페이지에 게시되는 게시글 리스트 조회
+			일련번호 / 카테고리 / 서적이름 / 출판사 /  가격 / 전차책유무 / 등록일 -->
+	<select id="selectList" parameterType="cmmnDefaultVO" resultType="aladdinVO">
+		/* Aladdin.selectList */
+		<![CDATA[
+      	     SELECT  
+				  AL_SEQ 																alSeq
+				, AL_CATEGORY														alCategory 
+				, AL_TITLE																alTitle
+				, AL_PUBLISHING													alPublishing
+				, AL_PRICE																alPrice
+				, AL_EBOOK_YN														alEbookYn
+				, DATE_FORMAT(AL_RGST_DT,'%Y.%m.%d')		alRgstDt
+
+		     FROM  T_ALADDIN 
+			 WHERE AL_USE_YN='Y'	
+	      ]]>
+		     <include refid="Where"/>	<!-- 상단에 중복 Where쿼리  재사용 -->
+	     <![CDATA[ 
+	    		ORDER BY 		AL_SEQ 		DESC
+				LIMIT  				#{firstIndex} , #{recordCountPerPage}
+		]]> 
+	</select>	
+
+
+	<!-- selectCount : 사용여부 Y 조회  -->
+	<select id="selectCount" parameterType="cmmnDefaultVO" resultType="int">
+		/* Aladdin.selectCount */
+		<![CDATA[
+			SELECT 
+				COUNT(AL_SEQ) 					cnt 
+			FROM T_ALADDIN 
+			WHERE AL_USE_YN='Y' 
+		]]>
+			 <include refid="Where"/>
+	</select>
+	
+	<!-- insertContents : 내용 삽입 
+			번호/책 이름/등록자/등록일/카테고리/작가/ 출판사/출판일/결제수단/가격/  
+		   좋아요/별점/전자책유무/품절여부/서적설명/출판사서평/책표지/ 첨부파일   18개 -->
+	<insert id="insertContents" parameterType="aladdinVO">
+		/* Aladdin.insertContents */
+		<![CDATA[
+			INSERT INTO T_ALADDIN(
+           	  	  AL_SEQ 
+				, AL_TITLE 
+				, AL_RGST_ID
+				, AL_RGST_DT
+				, AL_CATEGORY
+				, AL_WRITER
+				, AL_PUBLISHING
+				, AL_PAYMENT
+				, AL_PRICE
+				
+				, AL_LIKE
+				, AL_STAR 
+				, AL_EBOOK_YN
+				, AL_SOLDOUT_YN	
+				, AL_CONT
+				, AL_REVIEW_P	
+				, AL_COVER 
+				, AL_ATCH_FILE_ID 
+			)
+			
+			VALUES (
+				 (SELECT IFNULL(MAX(TA.AL_SEQ)+1,1) FROM T_ALADDIN TA)
+				,#{alTitle }
+				,#{loginSeq  }
+				,#{alRgstDt }
+				,#{alCategory }
+				,#{alWriter }
+				,#{alPublishing }
+				,#{alPayment }
+				,#{alPrice }
+				
+				,#{alLike }
+				,#{alStar }
+				,#{alEbookYn }
+				,#{alSoldoutYn }
+				,#{alCont }
+				,#{alReviewP }
+				,#{alCover }
+				,#{alAtchFileId }
+			)
+		]]>
+	</insert>
+	
+	
+	<!-- updateContents : 게시글 수정  
+		서적이름/작가/출판사/출판일/카테고리/								별점/좋아요/ 서적설명/출판사서평/책표지
+		/전자책유무/품절여부/ 결제수단/가격/첨부파일   			수정일 16개 -->
+	<update id="updateContents" parameterType="aladdinVO">
+		/* Aladdin.updateContents */
+		<![CDATA[
+			UPDATE T_ALADDIN     
+			 SET 
+				  AL_TITLE																 = #{alTitle } 
+				, AL_WRITER															 = #{alWriter}
+				, AL_PUBLISHING													 = #{alPublishing}
+				, AL_PUBL_DT															 = #{alPublDt}
+				, AL_CATEGORY														 = #{alCategory}
+				
+				, AL_STAR 																 = #{alStar}
+				, AL_LIKE																	 = #{alLike}
+				, AL_CONT																 = #{alCont}
+				, AL_REVIEW_P														 = #{alReviewP}
+				, AL_COVER															 = #{alCover}
+				
+				, AL_EBOOK_YN														 = #{alEbookYn}
+				, AL_SOLDOUT_YN												 = #{alSoldoutYn}
+				, AL_PAYMENT														 = #{alPayment}
+				, AL_ATCH_FILE_ID 												 = #{alAtchFileId}
+				, AL_PRICE																 = #{alPrice}
+				, AL_RVSE_DT 														 =  NOW()
+					
+			WHERE  AL_SEQ =				#{alSeq }  
+		]]> 	
+		
+
+	</update>
+	
+	<!-- deleteContents : 게시글삭제 사용여부 > 부  -->
+	<update id="deleteContents" parameterType="aladdinVO">
+		/* Aladdin.deleteContents */
+		<![CDATA[
+			UPDATE T_ALADDIN 
+		       SET
+	          	 AL_USE_YN='N'
+			WHERE AL_SEQ = #{alSeq}
+		]]>
+	</update>
+
+	
+	
+	
+</mapper>
