@@ -7,7 +7,7 @@
 	<%-- search  --%>
 	<div class="search_box">
 		<form:form commandName="searchVO" name="defaultFrm" id="defaultFrm" method="post"  onsubmit="return false;">
-			<input type="hidden" id="seSeq" name="seSeq"/>
+			<input type="hidden" id="qaSeq" name="qaSeq"/>
 			<input type="hidden" id="pageIndex" name="pageIndex"/>
 			<fieldset>
 				<legend>검색</legend>

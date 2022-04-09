@@ -1,62 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.open.Secret">
+<mapper namespace="com.open.Qna">
 
 	<sql id="Where"> <!-- 게시글,댓글  -->
 		<if test="searchKeyword !=null and searchKeyword !=''">
 			<if test="searchCondition !=null and searchCondition !='' and searchCondition ==0">
-				AND (SE_TITLE LIKE CONCAT('%',#{searchKeyword},'%') OR SE_CONT like CONCAT('%',#{searchKeyword},'%') )
+				AND (QA_TITLE LIKE CONCAT('%',#{searchKeyword},'%') OR QA_CONT like CONCAT('%',#{searchKeyword},'%') )
 			</if>
 			<if test="searchCondition !=null and searchCondition !='' and searchCondition ==1">
-				AND SE_TITLE LIKE CONCAT('%',#{searchKeyword},'%')
+				AND QA_TITLE LIKE CONCAT('%',#{searchKeyword},'%')
 			</if>
 			<if test="searchCondition !=null and searchCondition !='' and searchCondition ==2">
-				AND SE_CONT LIKE CONCAT('%',#{searchKeyword},'%')
+				AND QA_CONT LIKE CONCAT('%',#{searchKeyword},'%')
 			</if>
 	 	</if>
 	</sql>
 	
-	<!-- selectContents : 게시글 내용 조회 -->
-	<select id="selectContents" parameterType="SecretVO" resultType="SecretVO">
-		/* Secret.selectContents */
+	<!-- selectContents : 게시글 내용, 답글 내용 조회 -->
+	<select id="selectContents" parameterType="QnaVO" resultType="QnaVO">
+		/* Qna.selectContents */
 		<![CDATA[
 			 SELECT  
-				  SE_SEQ 																seSeq
-				, SE_TITLE																seTitle
-				, SE_CONT																seCont
-				, DATE_FORMAT(SE_RGST_DT,'%Y.%m.%d')									seRgstDt
-				, F_USER_NM(SE_RGST_ID)													seRgstId
-				, SE_ATCH_FILE_ID 														seAtchFileId
-				, SE_SECRET_YN															seSecretYn
-				, SE_SECRET_PW															seSecretPw
-				, SE_CATEGORY															seCategory
+				  QA_SEQ 																qaSeq
+				, QA_GROUP_SEQ 															qaGroupSeq
+				, QA_TITLE																qaTitle
+				, QA_CONT																qaCont
+				, DATE_FORMAT(QA_RGST_DT,'%Y.%m.%d')									qaRgstDt
+				, F_USER_NM(QA_RGST_ID)													qaRgstId
+				, QA_ATCH_FILE_ID 														qaAtchFileId
+				, QA_ANSWER_YN															qaAnswerYn
+				, QA_CATEGORY															qaCategory
 				
-		     FROM 	 t_secret 
-			 WHERE 	 SE_USE_YN	=	'Y'	
-				 AND SE_SEQ 	=	#{seSeq}
+		     FROM 	 t_qna 
+			 WHERE 	 QA_USE_YN	=	'Y'	
+				 AND QA_SEQ 	=	#{qaSeq}
 		]]> 
 	</select>	
 	
 	
 	
 	<!-- selectList : 게시글 리스트 조회 -->
-	<select id="selectList" parameterType="cmmnDefaultVO" resultType="SecretVO">
-		/* Secret.selectList */
+	<select id="selectList" parameterType="cmmnDefaultVO" resultType="QnaVO">
+		/* Qna.selectList */
 		<![CDATA[
       	     SELECT  
-				  SE_SEQ 																seSeq
-				, SE_TITLE																seTitle
-				, DATE_FORMAT(SE_RGST_DT,'%Y.%m.%d')									seRgstDt
-				, F_USER_NM(SE_RGST_ID)													seRgstId
-				, SE_SECRET_YN															seSecretYn
-				, SE_SECRET_PW															seSecretPw
+				  QA_SEQ 																qaSeq
+				, QA_GROUP_SEQ 															qaGroupSeq
+				, QA_TITLE																qaTitle
+				, DATE_FORMAT(QA_RGST_DT,'%Y.%m.%d')									qaRgstDt
+				, F_USER_NM(QA_RGST_ID)													qaRgstId
+				, QA_ANSWER_YN															qaAnswerYn
+				, QA_CONT_ANS															qaContAns
 
-		     FROM  	t_secret 
-			 WHERE 	SE_USE_YN='Y' 
+		     FROM  	t_qna 
+			 WHERE 	QA_USE_YN='Y' 
 	      ]]>
 		     <include refid="Where"/>	
 	     <![CDATA[ 
-	    		ORDER BY 		SE_SEQ 			DESC
+	    		ORDER BY 		QA_SEQ 			DESC
 				LIMIT  			#{firstIndex} , #{recordCountPerPage}
 		]]> 
 	</select>	
@@ -64,79 +65,133 @@
 
 	<!-- selectCount : 사용중인 게시글 개수 조회  -->
 	<select id="selectCount" parameterType="cmmnDefaultVO" resultType="int">
-		/* Secret.selectCount */
+		/* Qna.selectCount */
 		<![CDATA[
 			SELECT 
-				COUNT(SE_SEQ) 					cnt 
-			FROM 	t_secret 
-			WHERE 	SE_USE_YN='Y' 
+				COUNT(QA_SEQ) 					cnt 
+			FROM 	t_qna 
+			WHERE 	QA_USE_YN='Y' 
 		]]>
 			 <include refid="Where"/>
 	</select>
 	
 	<!-- insertContents : 게시글 삽입 --> 
-	<insert id="insertContents" parameterType="SecretVO">
-		/* Secret.insertContents */
+	<insert id="insertContents" parameterType="QnaVO">
+		/* Qna.insertContents */
 		<![CDATA[
-			INSERT INTO t_secret(
-           	  	  SE_SEQ
-				, SE_TITLE 
-				, SE_CONT
-				, SE_RGST_ID 
-				, SE_ATCH_FILE_ID 
-				, SE_SECRET_YN	
-				, SE_SECRET_PW	
-				, SE_CATEGORY																																											
+			INSERT INTO t_qna(
+           	  	  QA_SEQ
+           	  	, QA_GROUP_SEQ
+				, QA_TITLE 
+				, QA_CONT
+				, QA_RGST_ID 
+				, QA_ATCH_FILE_ID 
+				, QA_CATEGORY																																											
 			)
 			VALUES (
-				 (SELECT IFNULL(MAX(TS.SE_SEQ)+1,1) FROM t_secret TS)
-				,#{seTitle}
-				,#{seCont}
+				 (SELECT IFNULL(MAX(TQ.QA_SEQ)+1,1) FROM t_qna TQ)
+				,(SELECT IFNULL(MAX(TQ.QA_SEQ)+1,1) FROM t_qna TQ)
+				,#{qaTitle}
+				,#{qaCont}
 				,#{loginSeq}
-				,#{seAtchFileId}
-				,#{seSecretYn}
-				,#{seSecretPw}
-				,#{seCategory}
+				,#{qaAtchFileId}
+				,#{qaCategory}
 			)
 		]]>
 	</insert> 
 	
 	<!-- updateContents : 게시글 수정  -->
-	<update id="updateContents" parameterType="SecretVO">
-		/* Secret.updateContents */
+	<update id="updateContents" parameterType="QnaVO">
+		/* Qna.updateContents */
 		<![CDATA[
-			UPDATE t_secret     
+			UPDATE t_qna     
 			 SET 
-				  SE_TITLE    							= #{seTitle}
-				, SE_CONT								= #{seCont}
-				, SE_RVSE_DT 						 	= NOW()
-				, SE_ATCH_FILE_ID 						= #{seAtchFileId}
-				, SE_SECRET_YN							= #{seSecretYn}
-				, SE_SECRET_PW							= #{seSecretPw}	
-				, SE_CATEGORY							= #{seCategory}			
+				  QA_TITLE    							= #{qaTitle}
+				, QA_CONT								= #{qaCont}
+				, QA_RVSE_DT 						 	= NOW()
+				, QA_ATCH_FILE_ID 						= #{qaAtchFileId}
+				, QA_CATEGORY							= #{qaCategory}			
 											
 									
-			WHERE  SE_SEQ =	#{seSeq}  
+			WHERE  QA_SEQ =	#{qaSeq}  
 		]]> 	
-		
-
 	</update>
 	
 	<!-- deleteContents : 게시글삭제 사용여부 > 부  -->
-	<update id="deleteContents" parameterType="SecretVO">
-		/* Secret.deleteContents */
+	<update id="deleteContents" parameterType="QnaVO">
+		/* Qna.deleteContents */
 		<![CDATA[
-			UPDATE t_secret 
+			UPDATE t_qna 
 		       SET
-	          	 SE_USE_YN	='N'
-			WHERE SE_SEQ = #{seSeq}
+	          	 QA_USE_YN	='N'
+			WHERE QA_SEQ = #{qaSeq}
 		]]>
 	</update>
 	
+	<!-- selectComments : 답글 내용 조회 -->
+	<select id="selectComments" parameterType="QnaVO" resultType="QnaVO">
+		/* Qna.selectComments */
+		<![CDATA[
+			 SELECT  
+				  QA_SEQ 																qaSeq
+				, QA_GROUP_SEQ 															qaGroupSeq
+				, QA_CONT_ANS															qaContAns
+				, DATE_FORMAT(QA_MA_RGST_DT,'%Y.%m.%d')									qaMaRgstDt
+				, F_USER_NM(QA_MA_RGST_ID)												qaMaRgstId
+				, QA_ANSWER_YN															qaAnswerYn
+				
+		     FROM 	 t_qna 
+			 WHERE 	 QA_USE_YN	=	'Y'	
+				 AND QA_GROUP_SEQ 	=	#{qaSeq}
+				 AND QA_SEQ <> QA_GROUP_SEQ
+		]]> 
+	</select>	
 
-
+	<!-- insertComments : 답글 삽입 --> 
+	<insert id="insertComments" parameterType="QnaVO">
+		/* Qna.insertComments */
+		<![CDATA[
+			INSERT INTO t_qna(
+           	  	  QA_SEQ
+           	  	, QA_GROUP_SEQ
+				, QA_CONT
+				, QA_MA_RGST_ID 
+				, QA_ANSWER_YN
+			)
+			VALUES (
+				 (SELECT IFNULL(MAX(TQ.QA_SEQ)+1,1) FROM t_qna TQ)
+				,#{qaSeq}
+				,#{qaCont}
+				,#{loginSeq}
+				, "Y"
+			)
+		]]>
+	</insert> 
 	
+	<!-- updateComments : 답글 수정  -->
+	<update id="updateComments" parameterType="QnaVO">
+		/* Qna.updateComments */
+		<![CDATA[
+			UPDATE t_qna     
+			 SET 
+				  QA_CONT								= #{qaCont}
+				, QA_RVSE_DT 						 	= NOW()
+											
+									
+			WHERE  QA_SEQ <> QA_GROUP_SEQ  
+		]]> 	
+	</update>
 	
+	<!-- deleteComments : 답글 삭제 사용여부 > 부  -->
+	<update id="deleteComments" parameterType="QnaVO">
+		/* Qna.deleteComments */
+		<![CDATA[
+			UPDATE t_qna 
+		       SET
+	          	 QA_USE_YN	='N'
+			WHERE QA_SEQ <> QA_GROUP_SEQ
+		]]>
+	</update>
 	
 	
 </mapper>

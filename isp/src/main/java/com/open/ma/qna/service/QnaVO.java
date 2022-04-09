@@ -19,7 +19,8 @@ public class QnaVO extends CmmnDefaultVO implements Serializable {
 	 */
 	private static final long serialVersionUID = 2172623835339565860L;
 	
-	private String qaSeq;             
+	private String qaSeq;       
+	private String qaGroupSeq;
 	private String qaRgstId;      
 	private String qaRgstDt;            
 	private String qaRvseDt;
@@ -438,6 +439,48 @@ public class QnaVO extends CmmnDefaultVO implements Serializable {
 
 	public void setQaAnswerYn(String qaAnswerYn) {
 		this.qaAnswerYn = qaAnswerYn;
+	}
+
+
+
+
+
+
+
+
+
+
+
+	public Stirng getQaGroupSeq() {
+		return qaGroupSeq;
+	}
+
+
+
+
+
+
+
+
+
+
+
+	public void setQaGroupSeq(Stirng qaGroupSeq) {
+		this.qaGroupSeq = qaGroupSeq;
+	}
+
+
+
+
+
+
+
+
+
+
+
+	public void setQaGroupSeq(String qaGroupSeq) {
+		this.qaGroupSeq = qaGroupSeq;
 	}
 
 	

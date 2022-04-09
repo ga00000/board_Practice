@@ -29,9 +29,7 @@
 				<c:when test="${fn:length(resultList) gt 0}">
 					<c:forEach var="result" items="${resultList}" varStatus="status">
 						<tr class="cursor" onclick="fncPageBoard('view','view.do','${result.jgSeq}','jgSeq')">
-							<td>
-							${paginationInfo.totalRecordCount+1- ((searchVO.pageIndex-1) * searchVO.pageUnit + status.count)}
-							</td>
+							<td>${paginationInfo.totalRecordCount+1- ((searchVO.pageIndex-1) * searchVO.pageUnit + status.count)}</td>
 							<td>${result.jgReplyUseYn eq  'N' ? '부' : '여' }</td>
 							<td class="subject"><span class=" lengthCut">${result.jgTitle }</span></td>
 							<td>${result.jgRgstId }</td>

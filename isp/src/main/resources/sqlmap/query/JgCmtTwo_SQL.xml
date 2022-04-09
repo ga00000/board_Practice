@@ -193,9 +193,9 @@
 		<![CDATA[
 			UPDATE t_jgcmttwo     
 			 SET 
-				  JG_CONT    										 = #{jgCont } 
-				, JG_RVSE_DT 											 =  NOW()
-				, JG_RE_ATCH_FILE_ID							 = #{jgReAtchFileId }
+				  JG_CONT    									= #{jgCont } 
+				, JG_RVSE_DT 									=  NOW()
+				, JG_RE_ATCH_FILE_ID							= #{jgReAtchFileId }
 					
 			WHERE   JG_SEQ <> JG_GROUP_SEQ
 		]]> 	

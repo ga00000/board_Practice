@@ -4,9 +4,9 @@
 <script type="text/javascript" src="/resource/editor/js/HuskyEZCreator.js" charset="utf-8"></script>
 
 <div class="content_box">
-	<form:form commandName="secretVO" name="defaultFrm" id="defaultFrm" method="post">
-		<form:hidden path="seSeq" id="seSeq"/>
-		<form:hidden path="seAtchFileId" id="seAtchFileId"/>
+	<form:form commandName="qnaVO" name="defaultFrm" id="defaultFrm" method="post">
+		<form:hidden path="qaSeq" id="qaSeq"/>
+		<form:hidden path="qaAtchFileId" id="qaAtchFileId"/>
 		<jsp:directive.include file="/WEB-INF/jsp/cmmn/inc/incSearchForm.jsp"/>
 		<div class="tbl_wrap">
 			<table class="tbl_row_type01"> 
@@ -21,22 +21,16 @@
 					<tr>
 						<th scope="row" ><strong class="th_tit" > 게시글 제목 </strong></th>
 						<td colspan="3">
-							<input type="text" name="seTitle" id="seTitle" class="text w100p"   maxlength="100"  placeholder="제목을 입력해주세요." value="${secretVO.seTitle}" />
+							<input type="text" name="qaTitle" id="qaTitle" class="text w100p"   maxlength="100"  placeholder="제목을 입력해주세요." value="${qnaVO.qaTitle}" />
 								
 						</td>
 					</tr>
 					
 					<tr>
-						<th scope="row" ><strong class="th_tit" > 비밀글 여부 </strong></th>
-						<td class="cursor">
-							<input type="radio" name="seSecretYn" id="seSecret_Y" class="radio cursor"  value="Y"  ${secretVO.seSecretYn eq 'Y' ? 'checked' : '' } onclick="pwCheck();"/>
-							<label for ="seSecretY" >여</label>
-							<input type="radio" name="seSecretYn" id="seSecret_N" class="radio cursor" value="N" ${secretVO.seSecretYn eq 'N'  ? 'checked' : '' } ${empty secretVO.seSecretYn ? 'checked="checked"' : '' }  onclick="pwCheckOff();"/>
-							<label for ="seSecretN">부</label>
-						</td>
+						
 						<th scope="row" ><strong class="th_tit" > 카테고리 </strong></th>
 						<td class="cursor">
-							<select name ="seCategory" id = "seCategory" name = "seCategory" class=" cursor" style="width:100%;">
+							<select name ="qaCategory" id = "qaCategory" name = "qaCategory" class=" cursor" style="width:100%;">
 								<option value =""  selected >카테고리선택</option> 
 								<option value ="주문문의" >주문문의</option> 
 								<option value ="배송문의">배송문의</option> 
@@ -45,29 +39,19 @@
 						</td>
 					</tr>
 					
-					<tr style="display:none" id="inputPassword">
-						<th scope="row" ><strong class="th_tit" > 비밀번호 입력 </strong></th>
-						<td>
-							<input type="password" name="seSecretPw" id="seSecretPw" class="cursor"  maxlength="5" style="width:100%;" autocomplete="off"/>
-								
-						</td><th scope="row" ><strong class="th_tit" > 비밀번호확인 </strong></th>
-						<td>
-							<input type="password" name="seSecretPwCheck" id="seSecretPwCheck" class="cursor"  maxlength="5" style="width:100%;" />
-								
-						</td>
-					</tr>
+					
 					
 					<tr>
 						<th scope="row"><strong class="th_tit">게시글 내용</strong></th>
 						<td colspan="3">
-							<textarea name="seCont" id="seCont" class="txt_area w_100p" maxlength="200" >${util:unEscape(secretVO.seCont)}</textarea>
+							<textarea name="qaCont" id="qaCont" class="txt_area w_100p" maxlength="200" >${util:unEscape(qnaVO.qaCont)}</textarea>
 						</td> 
 					</tr>
 					
 					<tr>
 						<th scope="row"><strong>첨부파일</strong></th>
 						<td colspan="3">
-							<iframe name="seAtchFileIdFrame" id="seAtchFileIdFrame" src="/atch/fileUpload.do?atchFileId=${secretVO.seAtchFileId}&fileCnt=5&atchFileIdNm=seAtchFileId&updateType=upload" style="width: 100%;" height="50" frameborder="0" title="파일 업로드 폼"></iframe>
+							<iframe name="qaAtchFileIdFrame" id="qaAtchFileIdFrame" src="/atch/fileUpload.do?atchFileId=${qnaVO.qaAtchFileId}&fileCnt=5&atchFileIdNm=qaAtchFileId&updateType=upload" style="width: 100%;" height="50" frameborder="0" title="파일 업로드 폼"></iframe>
 						</td>
 					</tr> 
 					 
@@ -88,7 +72,7 @@ $(document).ready(function(){
 	<%-- 에디터 --%>
 	nhn.husky.EZCreator.createInIFrame({
 	    oAppRef: oEditors,
-	    elPlaceHolder: "seCont",
+	    elPlaceHolder: "qaCont",
 	    sSkinURI: "/resource/editor/SmartEditor2Skin.html",
 	    fCreator: "createSEditor2"
 	});  // 에디터 끝 
@@ -107,45 +91,23 @@ $(document).ready(function(){
 	btnSubmit = function(){
 		var count=0;
 		// 제목 
-		if($("#seTitle").val() == "" || $("#seTitle").val() == null) {
-			fncMsg("seTitle","제목을 입력해주세요.");
-			$("#seTitle").focus();
+		if($("#qaTitle").val() == "" || $("#qaTitle").val() == null) {
+			fncMsg("qaTitle","제목을 입력해주세요.");
+			$("#qaTitle").focus();
 			count++;
 		}
 		// 내용
-		oEditors.getById["seCont"].exec("UPDATE_CONTENTS_FIELD", []);/* 에디터 */
-		if($("#seCont").val() == '<p>&nbsp;</p>') {
-			fncMsg("seCont","내용을 입력해주세요.");
+		oEditors.getById["qaCont"].exec("UPDATE_CONTENTS_FIELD", []);/* 에디터 */
+		if($("#qaCont").val() == '<p>&nbsp;</p>') {
+			fncMsg("qaCont","내용을 입력해주세요.");
 			count++;
 		}	
 		// 카테고리
-		if($("#seCategory").val()==""){
-			fncMsg("seCategory", "카테고리를 선택해주세요.")
+		if($("#qaCategory").val()==""){
+			fncMsg("qaCategory", "카테고리를 선택해주세요.")
 			count++;
 		} 
-		// 비밀글 - 여
-		if($("input:radio[id='seSecret_Y']").is(":checked")==true){
-			// 비밀번호 입력 null체크
-			if($("#seSecretPw").val() == "" || $("#seSecretPw").val() == null) {
-				fncMsg("seSecretPw","비밀번호를 입력해주세요.");
-				$("#seSecretPw").focus();
-				count++;
-			}
-			// 비밀번호 확인 null 체크
-			if($("#seSecretPwCheck").val() == "" || $("#seSecretPwCheck").val() == null) {
-				fncMsg("seSecretPwCheck","비밀번호를 한번 더 입력해주세요.");
-				$("#seSecretPwCheck").focus();
-				count++;
-			}
-			
-			// 비밀번호 (입력, 확인) 값 일치 확인 
-			if($("#seSecretPw").val()==$("#seSecretPwCheck").val()){
-			}else{
-				alert("비밀번호가 일치하지 않습니다.");
-				$("#seSecretPw").focus();
-				return false;
-			}
-		}
+		
 		
 		
 		if(count>0){
@@ -162,15 +124,7 @@ $(document).ready(function(){
 		fncPageBoard('view','view.do');
 	}
 	
-	// 비밀번호 입력창 display
-	pwCheck = function(){
-		$("#inputPassword").show();
-		
-	}
-	pwCheckOff = function(){
-		$("#inputPassword").hide();
-		
-	}
+	
 
 
 });

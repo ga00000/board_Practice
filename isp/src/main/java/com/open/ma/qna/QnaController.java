@@ -23,7 +23,8 @@ import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 import com.open.cmmn.model.CmmnDefaultVO;
 import com.open.cmmn.service.CmmnService;
 import com.open.cmmn.service.FileMngService;
-import com.open.ma.junggon.service.SecretVO;
+import com.open.ma.junggon.service.JgCmtTwoVO;
+import com.open.ma.qna.service.QnaVO;
 
 import egovframework.rte.fdl.property.EgovPropertyService;
 import egovframework.rte.ptl.mvc.tags.ui.pagination.PaginationInfo;
@@ -55,10 +56,10 @@ public class QnaController {
 	
 	
     /** Program ID **/
-    private final static String PROGRAM_ID = "Secret"; 
+    private final static String PROGRAM_ID = "Qna"; 
 
     /** folderPath **/
-    private final static String folderPath = "/ma/comment/secret/"; 
+    private final static String folderPath = "/ma/comment/qna/"; 
 
     @Autowired
 	private EhCacheCacheManager cacheManager;
@@ -109,7 +110,7 @@ public class QnaController {
 		model.addAttribute("paginationInfo", paginationInfo);
 
 		 /** 리스트 쿼리 실행(태그 id값으로 매칭)*/
-		List<SecretVO> resultList = (List<SecretVO>) cmmnService.selectList(searchVO, PROGRAM_ID );
+		List<QnaVO> resultList = (List<QnaVO>) cmmnService.selectList(searchVO, PROGRAM_ID );
 		model.addAttribute("resultList", resultList); 
 		
 		return folderPath + "addList";
@@ -125,13 +126,32 @@ public class QnaController {
 	 */
 	@SuppressWarnings("unchecked")
 	@RequestMapping(folderPath +"view.do")
-	public String view(@ModelAttribute("searchVO") SecretVO searchVO, Model model, HttpServletRequest request) throws Exception {
+	public String view(@ModelAttribute("searchVO") QnaVO searchVO, Model model, HttpServletRequest request) throws Exception {
 		/* 게시판  */
-		SecretVO secretVO = new SecretVO();
-		secretVO = (SecretVO) cmmnService.selectContents(searchVO, PROGRAM_ID);
-		model.addAttribute("secretVO", secretVO);
+		QnaVO qnaVO = new QnaVO();
+		qnaVO = (QnaVO) cmmnService.selectContents(searchVO, PROGRAM_ID);
+		model.addAttribute("qnaVO", qnaVO);
 		
 		return ".mLayout:"+ folderPath + "view";
+	}
+	
+	/**
+	 * 답글 상세화면 
+	 * @param searchVO
+	 * @param model
+	 * @param request
+	 * @return
+	 * @throws Exception
+	 */
+	@SuppressWarnings("unchecked")
+	@RequestMapping(folderPath + "addListReply.do")
+	public String addListReply(@ModelAttribute("searchVO") JgCmtTwoVO searchVO, Model model, HttpServletRequest request) throws Exception {
+		/* 답글 1개  */
+		QnaVO qnaVO = new QnaVO();
+		qnaVO = (QnaVO) cmmnService.selectContents(searchVO, PROGRAM_ID+".selectComments");
+		model.addAttribute("qnaVO", qnaVO);
+		
+		return folderPath + "addListReply";
 	}
 	
 	
@@ -145,13 +165,13 @@ public class QnaController {
 	 * @throws Exception
 	 */
 	@RequestMapping(folderPath + "{procType}Form.do") /*procType : 업무구분*/
-	public String form(@ModelAttribute("searchVO") SecretVO searchVO, Model model,@PathVariable String procType, HttpServletRequest request) throws Exception {
+	public String form(@ModelAttribute("searchVO") QnaVO searchVO, Model model,@PathVariable String procType, HttpServletRequest request) throws Exception {
 
-		SecretVO secretVO = new SecretVO();
+		QnaVO qnaVO = new QnaVO();
 		if (procType.equals("update")) {
-			secretVO = (SecretVO) cmmnService.selectContents(searchVO, PROGRAM_ID);
+			qnaVO = (QnaVO) cmmnService.selectContents(searchVO, PROGRAM_ID);
 		}
-		model.addAttribute("secretVO", secretVO);
+		model.addAttribute("qnaVO", qnaVO);
 
 		return ".mLayout:"+ folderPath + "form";
 	}
@@ -168,7 +188,7 @@ public class QnaController {
 	 */
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = folderPath + "{procType}Proc.do", method = RequestMethod.POST)
-	public String proc(@ModelAttribute("searchVO") SecretVO searchVO, Model model, SessionStatus status,@PathVariable String procType, HttpServletRequest request) throws Exception {
+	public String proc(@ModelAttribute("searchVO") QnaVO searchVO, Model model, SessionStatus status,@PathVariable String procType, HttpServletRequest request) throws Exception {
 		
 		if(procType != null){   
 			
@@ -178,15 +198,26 @@ public class QnaController {
 			} else if (procType.equals("update") ) {				
 				cmmnService.updateContents(searchVO, PROGRAM_ID);	
 				
-			} else if (procType.equals("delete")) {		/* 게시글+댓글삭제 */		
+			} else if (procType.equals("delete")) {		/* 게시글+답글삭제 */		
 				cmmnService.deleteContents(searchVO, PROGRAM_ID);
+				cmmnService.deleteContents(searchVO, PROGRAM_ID + ".deleteComments");
+			
+			} else if (procType.equals("insertRe")) {	/* 답글등록 +aJax select */		
+				cmmnService.updateContents(searchVO, PROGRAM_ID + ".insertComments");
+				searchVO = (QnaVO) cmmnService.selectContents(searchVO, PROGRAM_ID+".selectComments");
 				
-			} 
+			} else if (procType.equals("updateRe")) {	/* 답글수정 +aJax select */		
+				cmmnService.updateContents(searchVO, PROGRAM_ID + ".updateComments");
+				searchVO = (QnaVO) cmmnService.selectContents(searchVO, PROGRAM_ID+".selectComments");
+				
+			} else if (procType.equals("deleteRe")) {	/* 답글삭제*/
+				cmmnService.deleteContents(searchVO, PROGRAM_ID + ".deleteComments");
+			}
 			
 			if(procType.equals("update")){
 				model.addAttribute("message", "수정되었습니다.");
-				model.addAttribute("pName", "seSeq");	
-				model.addAttribute("pValue", searchVO.getSeSeq());
+				model.addAttribute("pName", "qaSeq");	
+				model.addAttribute("pValue", searchVO.getQaSeq());
 				model.addAttribute("cmmnScript", "view.do");
 				return "cmmn/execute";
 	    	}else if(procType.equals("insert")){
@@ -199,6 +230,19 @@ public class QnaController {
 				model.addAttribute("cmmnScript", "list.do");
 				return "cmmn/execute";
 				
+	    	}else if(procType.equals("insertRe") ){
+				model.addAttribute("message", "답글이 등록되었습니다..");
+				model.addAttribute("qnaVO", searchVO);
+				return folderPath + "addListReply";
+				
+	    	}else if(procType.equals("updateRe") ){  
+				model.addAttribute("message", "답글이 수정되었습니다..");
+				model.addAttribute("qnaVO", searchVO);
+				return folderPath + "addListReply";
+				
+	    	}else if(procType.equals("deleteRe") ){
+				model.addAttribute("qnaVO", "답글이 삭제되었습니다..");
+				return folderPath + "addListReply";
 	    	}
 	    	else{
 	    		return "redirect:list.do";
@@ -207,30 +251,7 @@ public class QnaController {
 		}return "redirect:list.do";
 	}
 
-	/**
-	 * 비밀번호 일치 확인 
-	 * @param searchVO
-	 * @param model
-	 * @param request
-	 * @return
-	 * @throws Exception
-	 */
-	@ResponseBody
-	@RequestMapping(folderPath +"checkPw.do")
-	public boolean checkPw(@ModelAttribute("searchVO") SecretVO searchVO, Model model, HttpServletRequest request) throws Exception {
-		/* 비밀번호 일치 확인  */
-		searchVO.getSeSeq(); // 게시글 seq 
-		searchVO.getSeSecretPw();  // 비밀번호 
-		SecretVO secretVO = new SecretVO();
-		secretVO = (SecretVO) cmmnService.selectContents(searchVO, PROGRAM_ID);
-		System.out.println(">>>>>>>>>>>>"+searchVO.getSeSeq()+"//"+searchVO.getSeSecretPw());
-		
-		if(secretVO.getSeSecretPw().equals(searchVO.getSeSecretPw())){
-			return true;
-		}else{
-			return false;
-			}
-	}	
+	
 		
 		
 		
